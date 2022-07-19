@@ -21,7 +21,7 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool.");
 
-    log::info!("starting HTTP server at http://localhost:8080");
+    log::info!("Running server on http://localhost:8080");
 
     // Start HTTP server
     HttpServer::new(move || {
@@ -29,8 +29,14 @@ async fn main() -> std::io::Result<()> {
             // set up DB pool to be used with web::Data<Pool> extractor
             .app_data(web::Data::new(pool.clone()))
             .wrap(middleware::Logger::default())
+            .wrap(middleware::DefaultHeaders::new().add((
+                "Weapon",
+                std::env::var("WEAPON").unwrap_or_else(|_| "UNKNOWN".to_owned()),
+            )))
+            .service(core::routes::index)
             .service(users::routes::get_user)
             .service(users::routes::add_user)
+            .default_service(web::route().to(core::error::not_found))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
