@@ -15,7 +15,7 @@ pub async fn get_user(
     // use web::block to offload blocking Diesel code without blocking server thread
     let user = web::block(move || {
         let conn = pool.get()?;
-        crate::users::actions::find_user(user_uid, &conn)
+        super::actions::find_user(user_uid, &conn)
     })
     .await?
     .map_err(actix_web::error::ErrorInternalServerError)?;
@@ -32,12 +32,12 @@ pub async fn get_user(
 #[post("/user")]
 pub async fn add_user(
     pool: web::Data<DbPool>,
-    form: web::Json<crate::users::models::User>,
+    form: web::Json<super::models::User>,
 ) -> Result<HttpResponse, Error> {
     // use web::block to offload blocking Diesel code without blocking server thread
     let user = web::block(move || {
         let conn = pool.get()?;
-        crate::users::actions::create_user(form.id, &form.lang, &conn)
+        super::actions::create_user(form.id, &form.lang, &conn)
     })
     .await?
     .map_err(actix_web::error::ErrorInternalServerError)?;
