@@ -1,8 +1,7 @@
-use diesel::table;
-
 table! {
     users (id) {
-        id -> Integer,
-        lang -> Text,
+        id -> Int4,
+        lang -> Varchar,
+        admin -> Bool,
     }
 }
