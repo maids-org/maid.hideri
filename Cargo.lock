@@ -670,7 +670,7 @@ dependencies = [
 
 [[package]]
 name = "maid-hideri"
-version = "0.1.0"
+version = "0.1.4"
 dependencies = [
  "actix-web",
  "diesel",
