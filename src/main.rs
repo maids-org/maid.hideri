@@ -8,6 +8,7 @@ mod users;
 use actix_web::{middleware, web, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
+use crate::core::helper::{db_target, target};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -15,13 +16,12 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
     // set up database connection pool
-    let conn_spec = std::env::var("DATABASE_URL").expect("DATABASE_URL");
-    let manager = ConnectionManager::<PgConnection>::new(conn_spec);
+    let manager = ConnectionManager::<PgConnection>::new(db_target());
     let pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
 
-    log::info!("Running server on http://localhost:8080");
+    log::info!("Running server on http://{}", target());
 
     // Start HTTP server
     HttpServer::new(move || {
@@ -29,16 +29,13 @@ async fn main() -> std::io::Result<()> {
             // set up DB pool to be used with web::Data<Pool> extractor
             .app_data(web::Data::new(pool.clone()))
             .wrap(middleware::Logger::default())
-            .wrap(middleware::DefaultHeaders::new().add((
-                "Weapon",
-                std::env::var("WEAPON").unwrap_or_else(|_| "UNKNOWN".to_owned()),
-            )))
+            .wrap(core::weapon())
             .service(core::routes::index)
             .service(users::routes::get_user)
             .service(users::routes::add_user)
             .default_service(web::route().to(core::error::not_found))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(target())?
     .run()
     .await
 }
